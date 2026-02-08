@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinApex - Premium Financial Suite</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body data-theme="dark">
+    <div class="container">
+        <header>
+            <div class="logo">FINAPEX</div>
+            <div class="header-actions">
+                <button id="currToggle" class="btn btn-outline">$ USD</button>
+                <button id="langToggle" class="btn btn-outline">EN</button>
+                <button id="themeToggle" class="btn btn-outline btn-icon"><i data-lucide="moon"></i></button>
+                <button id="exportBtn" class="btn btn-outline btn-icon" title="Backup"><i
+                        data-lucide="upload"></i></button>
+                <button id="importBtn" class="btn btn-outline btn-icon" title="Restore"><i
+                        data-lucide="download"></i></button>
+                <button id="newTransactionBtn" class="btn btn-primary"><i data-lucide="plus-circle"></i>
+                    Transaction</button>
+            </div>
+        </header>
+
+        <div class="nav-tabs-container">
+            <nav class="nav-tabs">
+                <button class="nav-tab active" id="tabDashboard" onclick="switchView('dashboard')">
+                    <i data-lucide="layout-dashboard"></i> Dashboard
+                </button>
+                <button class="nav-tab" id="tabSavings" onclick="switchView('savings')">
+                    <i data-lucide="piggy-bank"></i> Savings Menu
+                </button>
+            </nav>
+        </div>
+
+        <!-- Dashboard View -->
+        <main id="dashboardView" class="view-section active">
+            <section class="stats-grid">
+                <div class="glass-card stat-item">
+                    <div class="stat-label">Total Net Worth</div>
+                    <div id="totalBalance" class="stat-value">$0</div>
+                    <div id="balanceLabel" style="font-size: 0.8rem; margin-top: 0.5rem; font-weight: 700;">Combined
+                        Funds</div>
+                </div>
+                <div class="glass-card stat-item">
+                    <div class="stat-label">Monthly Income</div>
+                    <div id="totalIncome" class="stat-value" style="color: var(--success)">$0</div>
+                </div>
+                <div class="glass-card stat-item">
+                    <div class="stat-label">Monthly Expense</div>
+                    <div id="totalExpense" class="stat-value" style="color: var(--danger)">$0</div>
+                </div>
+            </section>
+
+            <section class="stats-grid" style="grid-template-columns: 1.5fr 1fr;">
+                <div class="glass-card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <h3>Expense Categories</h3>
+                        <select id="chartFilter" class="form-control" style="width: auto;">
+                            <option value="all">All Time</option>
+                            <option value="month">This Month</option>
+                        </select>
+                    </div>
+                    <div style="height: 300px;"><canvas id="expenseChart"></canvas></div>
+                </div>
+                <div class="glass-card">
+                    <h3>Goal Status</h3>
+                    <div id="savingsSummaryContainer" style="margin-top: 1rem;"></div>
+                </div>
+            </section>
+
+            <section class="glass-card" style="margin-top: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>Recent Transactions</h3>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Search..."
+                            style="width: 200px;">
+                        <button id="exportCsvBtn" class="btn btn-outline">CSV</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table id="transactionTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Notes</th>
+                                <th>Amount</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <!-- Savings Menu View -->
+        <main id="savingsView" class="view-section">
+            <div class="savings-section-title">
+                <h2>Accounts (Celengan)</h2>
+                <button id="newWalletBtn" class="btn btn-primary"><i data-lucide="plus"></i> Add Account</button>
+            </div>
+            <div id="walletsGrid" class="savings-menu-grid"></div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="transactionModal">
+        <div class="glass-card modal">
+            <h2 id="modalTitle">Transaction</h2>
+            <form id="transactionForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label>Type</label>
+                    <select class="form-control" id="targetType" required>
+                        <option value="in">Income (+)</option>
+                        <option value="out">Expense (-)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Select Account (Celengan)</label>
+                    <select class="form-control" id="targetWallet" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <input type="text" class="form-control" id="targetCategory" list="catList" required>
+                    <datalist id="catList"></datalist>
+                </div>
+                <div class="form-group">
+                    <label>Amount</label>
+                    <input type="number" class="form-control" id="targetAmount" required>
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" class="form-control" id="targetDate" required>
+                </div>
+                <div class="form-group"><label>Notes</label><textarea class="form-control" id="targetNotes"></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn btn-outline" id="closeModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Wallet Modal -->
+    <div class="modal-overlay" id="walletModal">
+        <div class="glass-card modal">
+            <h2 id="walletModalTitle">New Account</h2>
+            <form id="walletForm">
+                <input type="hidden" id="walletEditId">
+                <div class="form-group">
+                    <label>Account Name</label>
+                    <input type="text" class="form-control" id="walletName" required placeholder="e.g. BCA, ShopeePay">
+                </div>
+                <div class="form-group">
+                    <label>Initial Balance</label>
+                    <input type="number" class="form-control" id="walletBalance" value="0">
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                    <button type="button" class="btn btn-outline" onclick="closeWalletModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+
+</html>
